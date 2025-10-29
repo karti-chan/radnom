@@ -1,5 +1,6 @@
-package com.example.radnom;
+package com.example.radnom.controller;
 
+import com.example.radnom.config.JwtUtils;
 import com.example.radnom.entity.User;
 import com.example.radnom.repository.UserRepository;
 import lombok.Data;
@@ -18,6 +19,9 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
     
+    @Autowired
+    private JwtUtils jwtUtils;
+    
     public AuthController() {
         System.out.println("🎉 AUTH CONTROLLER utworzony!");
     }
@@ -32,7 +36,6 @@ public class AuthController {
         System.out.println("📨 Rejestracja: " + request.getUsername());
         
         try {
-            // Sprawdź czy użytkownik już istnieje
             if (userRepository.existsByUsername(request.getUsername())) {
                 return ResponseEntity.badRequest().body("Username already exists");
             }
@@ -41,7 +44,6 @@ public class AuthController {
                 return ResponseEntity.badRequest().body("Email already exists");
             }
             
-            // Stwórz nowego użytkownika
             User user = new User();
             user.setUsername(request.getUsername());
             user.setEmail(request.getEmail());
@@ -58,12 +60,60 @@ public class AuthController {
         }
     }
     
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        System.out.println("🔐 Logowanie: " + request.getUsername());
+        
+        try {
+            User user = userRepository.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                return ResponseEntity.badRequest().body("Invalid password");
+            }
+            
+            String token = jwtUtils.generateJwtToken(user.getUsername());
+            
+            return ResponseEntity.ok(new JwtResponse(
+                token,
+                "Bearer",
+                user.getUsername(),
+                user.getRole()
+            ));
+            
+        } catch (Exception e) {
+            System.out.println("❌ Błąd logowania: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+    
     @Data
     public static class RegisterRequest {
         private String username;
         private String email;
         private String password;
-        
         public RegisterRequest() {}
+    }
+    
+    @Data
+    public static class LoginRequest {
+        private String username;
+        private String password;
+        public LoginRequest() {}
+    }
+    
+    @Data
+    public static class JwtResponse {
+        private String token;
+        private String type = "Bearer";
+        private String username;
+        private String role;
+        
+        public JwtResponse(String token, String type, String username, String role) {
+            this.token = token;
+            this.type = type;
+            this.username = username;
+            this.role = role;
+        }
     }
 }
