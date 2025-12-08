@@ -4,8 +4,18 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',  // ← SPRING BOOT BACKEND
+        changeOrigin: true,
+        secure: false,
+        // rewrite: (path) => path.replace(/^\/api/, '') // opcjonalnie
+      }
+    }
+  },
   build: {
-    outDir: '../../resources/static',  // Frontend trafi do resources Springa
+    outDir: '../../resources/static',
     emptyOutDir: true,
   }
 })
