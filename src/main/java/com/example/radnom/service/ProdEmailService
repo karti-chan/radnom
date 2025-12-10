@@ -1,0 +1,30 @@
+// src/main/java/com/example/radnom/service/ProdEmailService.java
+package com.example.radnom.service;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import java.util.*;
+
+@Service
+@Profile("prod")
+public class ProdEmailService implements EmailService {
+    
+    @Value("${MAILTRAP_API_TOKEN}")
+    private String apiToken;
+    
+    @Value("${mailtrap.api.url}")
+    private String apiUrl;
+    
+    @Override
+    public void sendEmail(String to, String subject, String text) {
+        // Twój kod z ProdEmailService...
+    }
+    
+    @Override
+    public void sendPasswordResetEmail(String toEmail, String resetLink) {
+        // Implementacja...
+    }
+}

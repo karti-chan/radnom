@@ -1,9 +1,11 @@
 // src/main/frontend/src/components/auth/LoginForm.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom'; // ← DODAJ TEN IMPORT
 
 const LoginForm = ({ onSwitchToRegister }) => {
   const { login } = useAuth();
+  const navigate = useNavigate(); // ← DODAJ TEN HOOK
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,10 +55,23 @@ const LoginForm = ({ onSwitchToRegister }) => {
         </button>
         
         <div className="auth-switch">
-          Nie masz konta?{' '}
-          <button type="button" className="link-button" onClick={onSwitchToRegister}>
-            Zarejestruj się
-          </button>
+          <div style={{ marginBottom: '10px' }}>
+            Nie masz konta?{' '}
+            <button type="button" className="link-button" onClick={onSwitchToRegister}>
+              Zarejestruj się
+            </button>
+          </div>
+          
+          {/* ↓ DODAJ TEN BLOK ↓ */}
+          <div>
+            <button 
+              type="button" 
+              className="link-button"
+              onClick={() => navigate('/forgot-password')} // ← LEPIEJ niż window.location
+            >
+              Zapomniałem hasła
+            </button>
+          </div>
         </div>
       </form>
     </div>

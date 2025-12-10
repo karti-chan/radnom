@@ -43,4 +43,13 @@ public class JwtUtils {
         }
         return false;
     }
+    public String generatePasswordResetToken(String username) {
+    return Jwts.builder()
+            .setSubject(username)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // 1 godzina
+            .signWith(SignatureAlgorithm.HS256, jwtSecret)
+            .compact();
+    }
+    
 }

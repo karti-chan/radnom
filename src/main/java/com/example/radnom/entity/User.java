@@ -20,6 +20,12 @@ public class User {
     
     @Column(nullable = false)
     private String password;
+
+    @Column(name = "reset_password_token")
+    private String resetPasswordToken;
+    
+    @Column(name = "reset_password_expires")
+    private Long resetPasswordExpires;
     
     private String role = "USER";
     

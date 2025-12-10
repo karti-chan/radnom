@@ -19,15 +19,13 @@ hs_err_pid*.log
 replay_pid*.log
 
 # Frontend
-src/main/frontend/node/
-src/main/frontend/node_modules/
-src/main/frontend/dist/
-src/main/frontend/build/
 
 # Built assets
-src/resources/static/
-src/resources/
 
 # Environment
 .env
 .env.local
+
+# Spring Boot profiles
+application-prod.properties
+application-sandbox.properties
