@@ -13,8 +13,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByResetPasswordToken(String token);
     
      @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.username = :username")
-    Boolean existsByUsername(@Param("username") String username);
+    boolean existsByUsername(@Param("username") String username);
     
     @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.email = :email")  
-    Boolean existsByEmail(@Param("email") String email);
+    boolean existsByEmail(@Param("email") String email);
 }

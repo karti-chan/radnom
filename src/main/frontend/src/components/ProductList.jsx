@@ -8,9 +8,9 @@ function ProductList() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        console.log('🔄 Pobieram produkty z:', 'http://localhost:8080/api/products')
+        console.log('🔄 Pobieram produkty z:', 'http://localhost:8081/api/products')
         
-        const response = await fetch('http://localhost:8080/api/products')
+        const response = await fetch('http://localhost:8081/api/products')
         
         console.log('📡 Status odpowiedzi:', response.status)
         console.log('📡 Czy OK?:', response.ok)

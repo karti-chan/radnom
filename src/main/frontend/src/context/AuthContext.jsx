@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     console.log('🔐 login() called with username:', username);
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('http://localhost:8081/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (username, email, password) => {
     console.log('📝 register() called:', { username, email });
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('http://localhost:8081/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password }),

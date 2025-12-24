@@ -4,7 +4,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @ComponentScan(basePackages = "com.example.radnom")
@@ -19,7 +18,7 @@ public class RadnomApplication {
 			String[] beans = ctx.getBeanNamesForType(org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping.class);
 			System.out.println("🎯 Mapping beans: " + beans.length);
 			
-			String[] authBeans = ctx.getBeanNamesForType(Class.forName("com.example.radnom.AuthController"));
+			String[] authBeans = ctx.getBeanNamesForType(Class.forName("com.example.radnom.controller.AuthController"));
 			System.out.println("🎯 AuthController beans: " + authBeans.length);
 		} catch (Exception e) {
 			System.out.println("❌ Błąd: " + e.getMessage());

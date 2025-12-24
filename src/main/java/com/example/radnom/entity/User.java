@@ -1,5 +1,6 @@
 package com.example.radnom.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -30,4 +31,8 @@ public class User {
     private String role = "USER";
     
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonIgnore  // zapobiega cyklicznym referencjom
+    private Cart cart;
 }

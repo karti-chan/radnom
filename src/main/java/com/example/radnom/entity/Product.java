@@ -15,6 +15,9 @@ public class Product {
     @Id
     // ❌ USUŃ TĘ LINIĘ:
     // @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     @Column(name = "product_id")        
     private Integer productId;
     

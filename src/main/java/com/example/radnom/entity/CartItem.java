@@ -1,67 +1,44 @@
 package com.example.radnom.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "cart_items")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CartItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
-    private Long productId;
+    private Long id;  // ID elementu koszyka
+
+    @ManyToOne
+    @JoinColumn(name = "cart_id", nullable = false)
+    private Cart cart;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id", referencedColumnName = "product_id", nullable = false)
+    private Product product;
+
+    @Column(nullable = false)
+    private Integer quantity = 1;
+
+    // Pola kopiowane z produktu (opcjonalnie, dla wydajności)
+    @Column(name = "product_name")
     private String productName;
+
+    @Column(name = "price")
     private Integer price;
-    private Integer quantity;
-    
-    // Konstruktory
-    public CartItem() {}
-    
-    public CartItem(Long productId, String productName, Integer price, Integer quantity) {
-        this.productId = productId;
-        this.productName = productName;
-        this.price = price;
-        this.quantity = quantity;
-    }
-    
-    // Gettery i Settery
-    public Long getId() {
-        return id;
-    }
-    
-    public void setId(Long id) {
-        this.id = id;
-    }
-    
-    public Long getProductId() {
-        return productId;
-    }
-    
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
-    
-    public String getProductName() {
-        return productName;
-    }
-    
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-    
-    public Integer getPrice() {
-        return price;
-    }
-    
-    public void setPrice(Integer price) {
-        this.price = price;
-    }
-    
-    public Integer getQuantity() {
-        return quantity;
-    }
-    
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
+
+    @PrePersist
+    @PreUpdate
+    private void syncProductData() {
+        if (product != null) {
+            this.productName = product.getProductName();
+            this.price = product.getPrice();
+        }
     }
 }

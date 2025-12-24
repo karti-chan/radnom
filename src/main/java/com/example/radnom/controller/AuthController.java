@@ -1,4 +1,4 @@
-package com.example.radnom;  // ← GŁÓWNY PAKIET!
+package com.example.radnom.controller;  // ← GŁÓWNY PAKIET!
 
 import com.example.radnom.config.JwtUtils;
 import com.example.radnom.entity.User;
@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"},
+        maxAge = 3600,
+        allowCredentials = "true")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
