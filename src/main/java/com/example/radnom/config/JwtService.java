@@ -15,10 +15,10 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret:mySuperSecretKeyThatIsAtLeast256BitsLong123!mySuperSecretKeyThatIsAtLeast256BitsLong123!}")
+    @Value("${jwt.secret:}")
     private String secretKeyString;
 
-    @Value("${jwt.expiration:86400000}") // 24h default
+    @Value("${jwt.expiration:0}") // 24h default
     private Long expiration;
 
     private SecretKey getSigningKey() {
