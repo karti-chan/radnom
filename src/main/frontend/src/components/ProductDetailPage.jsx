@@ -38,7 +38,7 @@ const ProductDetailPage = () => {
   };
 
   const handleAddToCart = async () => {
-    console.log('=== DEBUG ADD TO CART ===');
+    console.log('=== DEBUG ADD TO CART FROM PRODUCT DETAILS ===');
     console.log('id from URL:', id, 'type:', typeof id);
 
     if (!isAuthenticated) {
@@ -46,41 +46,44 @@ const ProductDetailPage = () => {
       return;
     }
 
+    if (!product) {
+      console.error('❌ Product data not loaded yet');
+      alert('Nie można dodać produktu - dane nie zostały załadowane');
+      return;
+    }
+
     try {
-      // ⬇️ KONWERSJA STRING → NUMBER
-      const productId = parseInt(id, 10);  // "5" → 5
+      // ✅ Pobierz productId z obiektu produktu
+      const productId = product.productId || product.id;
 
-      console.log(`🛒 Adding product: ${productId} (${typeof productId})`);
+      console.log(`🛒 Adding product from details page:`);
+      console.log(`- Product ID: ${productId} (from product object)`);
+      console.log(`- Product Name: ${product.productName}`);
+      console.log(`- Quantity: ${quantity}`);
+      console.log(`- isAuthenticated: ${isAuthenticated}`);
 
-      // ⬇️ Przekaż productId jako liczbę
-      const success = await addToCart(productId, quantity);
+      // ✅ Przekaż productId jako LICZBĘ
+      const success = await addToCart(parseInt(productId), quantity);
 
       if (success) {
-        alert(`✅ Dodano ${quantity}x ${product.productName} do koszyka!`);
+        alert(`✅ Dodano ${quantity}x "${product.productName}" do koszyka!`);
       } else {
-        alert('❌ Nie udało się dodać do koszyka');
+        alert('❌ Nie udało się dodać do koszyka. Sprawdź konsolę.');
       }
     } catch (error) {
-      console.error('❌ Error adding to cart:', error);
-      alert('Nie udało się dodać do koszyka');
+      console.error('❌ Error adding to cart from product details:', error);
+      alert('Nie udało się dodać do koszyka: ' + error.message);
     }
   };
 
-useEffect(() => {
+  // Debug info
+  useEffect(() => {
     console.log('🔍 PRODUCT PAGE DEBUG:');
     console.log('- isAuthenticated:', isAuthenticated);
     console.log('- product:', product);
-    console.log('- product.stock:', product?.stock);
-    console.log('- Button disabled calculation:', !isAuthenticated || (product?.stock !== undefined && product?.stock <= 0));
+    console.log('- product?.stock:', product?.stock);
     console.log('- id from URL:', id);
   }, [isAuthenticated, product, id]);
-
-  // ⬇️ LUB DODAJ TO (lub oba):
-  console.log('🎯 ProductDetailPage RENDER:');
-  console.log('- isAuthenticated:', isAuthenticated);
-  console.log('- product exists:', !!product);
-  console.log('- product.stock:', product?.stock);
-  console.log('- Button should be disabled:', !isAuthenticated || (product?.stock !== undefined && product?.stock <= 0));
 
   if (loading) {
     return (
@@ -119,9 +122,6 @@ useEffect(() => {
               e.target.src = '/images/default-product.jpg';
             }}
           />
-          <div className="product-thumbnails">
-            {/* Tu możesz dodać miniaturki jeśli masz */}
-          </div>
         </div>
 
         <div className="product-info-section">
@@ -141,11 +141,6 @@ useEffect(() => {
               <span className="category-badge">{product.category}</span>
             )}
             {product.brand && <span>Marka: <strong>{product.brand}</strong></span>}
-            {product.rating && (
-              <span className="rating">
-                ⭐ {product.rating.toFixed(1)} ({product.reviewCount || 0} opinii)
-              </span>
-            )}
           </div>
 
           <div className="product-description">
@@ -186,7 +181,7 @@ useEffect(() => {
             <button
               onClick={handleAddToCart}
               className="add-to-cart-btn"
-              disabled={!isAuthenticated || (product.stock !== undefined && product.stock <= 0)}
+
             >
               🛒 Dodaj do koszyka
             </button>
