@@ -1,4 +1,4 @@
-package com.example.radnom.service;  // ✅ Zmieniłem na service
+package com.example.radnom.service;
 
 import com.example.radnom.entity.*;
 import com.example.radnom.repository.*;
@@ -14,7 +14,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class CartService {  // ✅ Zmieniłem nazwę z CartController na CartService
+public class CartService {
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
@@ -28,10 +28,7 @@ public class CartService {  // ✅ Zmieniłem nazwę z CartController na CartSer
         validateUserEmail(email);
 
         Cart cart = getOrCreateCart(email);
-
-        // ✅ Lombok daje getId() dla Long id
-        int count = cartItemRepository.countByCartId(cart.getId());
-        return count;
+        return cart.getTotalItemsCount(); // ✅ Użyj metody z encji Cart
     }
 
     public Cart getCart(String email) {
@@ -57,7 +54,6 @@ public class CartService {  // ✅ Zmieniłem nazwę z CartController na CartSer
         Cart cart = getOrCreateCart(email);
         Product product = getProductById(productId);
 
-        // ✅ Lombok daje getId() dla Long id w Cart
         Optional<CartItem> existingItem = cartItemRepository
                 .findByCartIdAndProductId(cart.getId(), productId);
 
@@ -67,13 +63,13 @@ public class CartService {  // ✅ Zmieniłem nazwę z CartController na CartSer
         } else {
             CartItem newItem = createCartItem(cart, product, quantity);
             cartItemRepository.save(newItem);
-            cart.getItems().add(newItem);
+            cart.addItem(newItem); // ✅ Użyj metody z encji
         }
 
         log.info("Successfully added product {} (quantity: {}) to cart for user {}",
                 productId, quantity, email);
 
-        return cart;
+        return cartRepository.save(cart); // ✅ Zapisz zmiany
     }
 
     public Cart removeFromCart(String email, Integer productId) {
@@ -82,17 +78,15 @@ public class CartService {  // ✅ Zmieniłem nazwę z CartController na CartSer
         validateRemoveFromCartRequest(email, productId);
         Cart cart = getOrCreateCart(email);
 
-        // ✅ Lombok daje getId() dla Long id w Cart
         CartItem item = cartItemRepository
                 .findByCartIdAndProductId(cart.getId(), productId)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found in cart"));
 
-        // ✅ Lombok daje getId() dla Long id w CartItem
         cartItemRepository.delete(item);
-        cart.getItems().removeIf(ci -> ci.getId().equals(item.getId()));
+        cart.removeItem(item); // ✅ Użyj metody z encji
 
         log.info("Successfully removed product {} from cart for user {}", productId, email);
-        return cart;
+        return cartRepository.save(cart);
     }
 
     public Cart updateQuantity(String email, Integer productId, Integer quantity) {
@@ -102,8 +96,8 @@ public class CartService {  // ✅ Zmieniłem nazwę z CartController na CartSer
         validateUpdateQuantityRequest(email, productId, quantity);
         Cart cart = getOrCreateCart(email);
 
-        // ✅ Lombok daje getId() dla Long id w Cart
         if (quantity == 0) {
+            // Usuń produkt jeśli ilość = 0
             cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
                     .ifPresent(item -> {
                         cartItemRepository.delete(item);
@@ -119,7 +113,7 @@ public class CartService {  // ✅ Zmieniłem nazwę z CartController na CartSer
         }
 
         log.info("Updated quantity of product {} to {} for user {}", productId, quantity, email);
-        return cart;
+        return cartRepository.save(cart);
     }
 
     public void clearCart(String email) {
@@ -127,12 +121,29 @@ public class CartService {  // ✅ Zmieniłem nazwę z CartController na CartSer
         validateUserEmail(email);
 
         Cart cart = getOrCreateCart(email);
-
-        // ✅ Lombok daje getId() dla Long id w Cart
         cartItemRepository.deleteByCartId(cart.getId());
-        cart.getItems().clear();
+        cart.clear(); // ✅ Użyj metody z encji
 
         log.info("Cleared cart for user {}", email);
+    }
+
+    public double calculateCartTotal(String email) {
+        log.debug("Calculating cart total for user: {}", email);
+        validateUserEmail(email);
+
+        Cart cart = getOrCreateCart(email);
+        return cart.getTotalPrice(); // ✅ Użyj metody z encji
+    }
+
+    public boolean isProductInCart(String email, Integer productId) {
+        validateUserEmail(email);
+
+        if (productId == null || productId <= 0) {
+            return false;
+        }
+
+        Cart cart = getOrCreateCart(email);
+        return cartItemRepository.existsByCartIdAndProductId(cart.getId(), productId);
     }
 
     // ========== PRIVATE BUSINESS LOGIC ==========
@@ -143,7 +154,7 @@ public class CartService {  // ✅ Zmieniłem nazwę z CartController na CartSer
                     User user = getUserByEmail(email);
                     Cart newCart = createNewCart(user);
                     log.debug("Created new cart for user: {}", email);
-                    return newCart;
+                    return cartRepository.save(newCart);
                 });
     }
 
@@ -154,20 +165,21 @@ public class CartService {  // ✅ Zmieniłem nazwę z CartController na CartSer
                 .quantity(quantity)
                 .price(product.getPrice())
                 .productName(product.getProductName())
+                .imageUrl(product.getImageUrl())
                 .build();
     }
 
     private void updateExistingItem(CartItem item, Integer additionalQuantity) {
         item.setQuantity(item.getQuantity() + additionalQuantity);
+        item.updatePriceFromProduct(); // ✅ Aktualizuj cenę z produktu
         log.debug("Increased quantity of product {} to {}",
                 item.getProduct().getId(), item.getQuantity());
     }
 
     private Cart createNewCart(User user) {
-        Cart newCart = Cart.builder()
+        return Cart.builder()
                 .user(user)
                 .build();
-        return cartRepository.save(newCart);
     }
 
     private User getUserByEmail(String email) {
@@ -222,37 +234,5 @@ public class CartService {  // ✅ Zmieniłem nazwę z CartController na CartSer
         if (quantity == null || quantity < 0) {
             throw new IllegalArgumentException("Quantity must be non-negative");
         }
-    }
-
-    // ========== ADDITIONAL BUSINESS METHODS ==========
-
-    public double calculateCartTotal(String email) {
-        log.debug("Calculating cart total for user: {}", email);
-        validateUserEmail(email);
-
-        Cart cart = getOrCreateCart(email);
-
-        if (cart.getItems() == null || cart.getItems().isEmpty()) {
-            return 0.0;
-        }
-
-        double total = cart.getItems().stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
-
-        log.debug("Cart total for user {}: {}", email, total);
-        return total;
-    }
-
-    public boolean isProductInCart(String email, Integer productId) {
-        validateUserEmail(email);
-
-        if (productId == null || productId <= 0) {
-            return false;
-        }
-
-        Cart cart = getOrCreateCart(email);
-        // ✅ Lombok daje getId() dla Long id w Cart
-        return cartItemRepository.existsByCartIdAndProductId(cart.getId(), productId);
     }
 }
