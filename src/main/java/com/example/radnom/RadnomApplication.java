@@ -6,22 +6,21 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan(basePackages = "com.example.radnom")
 public class RadnomApplication {
 
 	public static void main(String[] args) {
 		ApplicationContext ctx = SpringApplication.run(RadnomApplication.class, args);
-		System.out.println("🚀 Spring Boot uruchomiony!");
+		System.out.println("Spring Boot uruchomiony!");
 		
 		// Sprawdź czy AuthController jest załadowany
 		try {
 			String[] beans = ctx.getBeanNamesForType(org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping.class);
-			System.out.println("🎯 Mapping beans: " + beans.length);
+			System.out.println("Mapping beans: " + beans.length);
 			
 			String[] authBeans = ctx.getBeanNamesForType(Class.forName("com.example.radnom.controller.AuthController"));
-			System.out.println("🎯 AuthController beans: " + authBeans.length);
+			System.out.println("AuthController beans: " + authBeans.length);
 		} catch (Exception e) {
-			System.out.println("❌ Błąd: " + e.getMessage());
+			System.out.println("Błąd: " + e.getMessage());
 		}
 	}
 }

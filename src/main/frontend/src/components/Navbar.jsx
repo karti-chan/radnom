@@ -1,17 +1,48 @@
-// src/main/frontend/src/components/Navbar.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import AuthModal from './auth/AuthModal';
+import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const { cartCount } = useCart();
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Debug
+  useEffect(() => {
+    console.log('🎯 Navbar - cartCount updated:', cartCount);
+    console.log('🎯 Navbar - isAuthenticated:', isAuthenticated);
+  }, [cartCount, isAuthenticated]);
 
   return (
     <nav className="navbar">
-      <div className="nav-brand">Sklep</div>
-      
+      <div className="nav-brand">
+        <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          Sklep
+        </Link>
+      </div>
+
       <div className="nav-items">
+        {isAuthenticated && (
+          <Link to="/cart" className="cart-link">
+            <div className="cart-icon-container">
+              🛒
+              {/* ZMIEŃ: pokazuj zawsze badge, ale zmieniaj styl dla 0 */}
+              <span
+                className="cart-badge"
+                style={{
+                  opacity: cartCount > 0 ? 1 : 0.3,
+                  backgroundColor: cartCount > 0 ? '#ff4444' : '#999'
+                }}
+              >
+                {cartCount}
+              </span>
+            </div>
+          </Link>
+        )}
+
         {isAuthenticated ? (
           <>
             <span className="user-greeting">
@@ -22,7 +53,7 @@ const Navbar = () => {
             </button>
           </>
         ) : (
-          <button 
+          <button
             onClick={() => setShowAuthModal(true)}
             className="login-button"
           >
@@ -30,10 +61,10 @@ const Navbar = () => {
           </button>
         )}
       </div>
-      
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
       />
     </nav>
   );

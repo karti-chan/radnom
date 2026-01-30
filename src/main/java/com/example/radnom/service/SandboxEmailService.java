@@ -17,10 +17,10 @@ public class SandboxEmailService implements EmailService {
         this.mailSender = mailSender;
     }
     
-    @Value("${app.test.email:test@example.com}")  // 👈 DODAJ
+    @Value("${app.test.email:test@example.com}")  // DODAJ
     private String testEmail;
     
-    @Value("${app.safe.mode:true}")  // 👈 DODAJ
+    @Value("${app.safe.mode:true}")  // DODAJ
     private boolean safeMode;
     
     @Override

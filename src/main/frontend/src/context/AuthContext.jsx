@@ -82,10 +82,29 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
       console.log('✅ Login success, data:', data);
       
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user || { username }));
-      setUser(data.user || { username });
+      // ✅ POPRAWIONE: Sprawdź obie możliwe nazwy tokena
+      const token = data.token || data.accessToken;
+
+      if (!token) {
+        console.error('❌ No token in response!');
+        console.error('❌ Full response:', data);
+        throw new Error('No token received from server');
+      }
+
+      // ✅ ZAPISZ TOKEN
+      localStorage.setItem('token', token);
+
+      // ✅ ZAPISZ USER DATA (różne możliwe struktury)
+      const userData = {
+        username: data.username || data.user?.username || username
+      };
+
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+
+      console.log('✅ Token saved:', token.substring(0, 20) + '...');
       return { success: true };
+
     } catch (error) {
       console.error('❌ Login error:', error);
       return { success: false, error: error.message };
@@ -102,7 +121,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       console.log('📡 Register response status:', response.status);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Register failed:', errorText);
@@ -122,6 +141,7 @@ export const AuthProvider = ({ children }) => {
     console.log('🚪 logout() called');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('accessToken'); // wyczyść też inne tokeny
     setUser(null);
   };
 

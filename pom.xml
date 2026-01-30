@@ -71,9 +71,9 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>${lombok.version}</version>
+			<version>${lombok.version}</version> <!-- Teraz używa zmiennej z properties -->
 			<scope>provided</scope>
-			<optional>true</optional>  <!-- DODAJ optional -->
+			<optional>true</optional>
 		</dependency>
 		<!-- Spring Boot Starter Mail -->
 		<dependency>
@@ -98,6 +98,7 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
 
 	
 

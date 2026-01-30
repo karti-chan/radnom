@@ -23,9 +23,10 @@ replay_pid*.log
 # Built assets
 
 # Environment
-.env
+src/main/java/com/example/radnom/.env
 .env.local
 
 # Spring Boot profiles
+application.properties
 application-prod.properties
 application-sandbox.properties

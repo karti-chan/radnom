@@ -3,72 +3,72 @@ package com.example.radnom.controller;
 import com.example.radnom.entity.Cart;
 import com.example.radnom.entity.CartItem;
 import com.example.radnom.service.CartService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/cart")
-@CrossOrigin(origins = "http://localhost:5173")
+@RequiredArgsConstructor
 public class CartController {
 
-    @Autowired
-    private CartService cartService;
+    private final CartService cartService;
 
-    // Pobierz koszyk zalogowanego użytkownika
+    // 1. Pobierz liczbę produktów w koszyku
+    @GetMapping("/count")
+    public ResponseEntity<Integer> getCartItemCount(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername(); // email jest w username
+        return ResponseEntity.ok(cartService.getCartItemCount(email));
+    }
+
+    // 2. Pobierz cały koszyk
     @GetMapping
-    public ResponseEntity<Cart> getCart(Authentication authentication) {
-        String email = authentication.getName();
-        Cart cart = cartService.getOrCreateCart(email);
-        return ResponseEntity.ok(cart);
+    public ResponseEntity<Cart> getCart(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        return ResponseEntity.ok(cartService.getCart(email));
     }
 
-    // Pobierz elementy koszyka
+    // 3. Pobierz produkty w koszyku
     @GetMapping("/items")
-    public ResponseEntity<List<CartItem>> getCartItems(Authentication authentication) {
-        String email = authentication.getName();
-        Cart cart = cartService.getOrCreateCart(email);
-        return ResponseEntity.ok(cart.getItems());
+    public ResponseEntity<List<CartItem>> getCartItems(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        return ResponseEntity.ok(cartService.getCartItems(email));
     }
 
-    // Dodaj produkt do koszyka
+    // 4. Dodaj produkt do koszyka (teraz z RequestBody dla lepszej struktury)
     @PostMapping("/add")
-    public ResponseEntity<Cart> addToCart(
-            @RequestParam Integer productId,
-            @RequestParam(defaultValue = "1") Integer quantity,
-            Authentication authentication) {
-        String email = authentication.getName();
-        Cart cart = cartService.addToCart(email, productId, quantity);
-        return ResponseEntity.ok(cart);
+    public ResponseEntity<Cart> addToCart(@AuthenticationPrincipal UserDetails userDetails,
+                                          @RequestParam Integer productId,
+                                          @RequestParam Integer quantity) {
+        String email = userDetails.getUsername();
+        return ResponseEntity.ok(cartService.addToCart(email, productId, quantity));
     }
 
-    // Usuń produkt z koszyka
-    @DeleteMapping("/remove/{productId}")
-    public ResponseEntity<Cart> removeFromCart(
-            @PathVariable Integer productId,
-            Authentication authentication) {
-        String email = authentication.getName();
-        Cart cart = cartService.removeFromCart(email, productId);
-        return ResponseEntity.ok(cart);
+    // 5. Usuń produkt z koszyka
+    @DeleteMapping("/remove")
+    public ResponseEntity<Cart> removeFromCart(@AuthenticationPrincipal UserDetails userDetails,
+                                               @RequestParam Integer productId) {
+        String email = userDetails.getUsername();
+        return ResponseEntity.ok(cartService.removeFromCart(email, productId));
     }
 
-    // Zaktualizuj ilość produktu
+    // 6. Zaktualizuj ilość produktu
     @PutMapping("/update")
-    public ResponseEntity<Cart> updateQuantity(
-            @RequestParam Integer productId,
-            @RequestParam Integer quantity,
-            Authentication authentication) {
-        String email = authentication.getName();
-        Cart cart = cartService.updateQuantity(email, productId, quantity);
-        return ResponseEntity.ok(cart);
+    public ResponseEntity<Cart> updateQuantity(@AuthenticationPrincipal UserDetails userDetails,
+                                               @RequestParam Integer productId,
+                                               @RequestParam Integer quantity) {
+        String email = userDetails.getUsername();
+        return ResponseEntity.ok(cartService.updateQuantity(email, productId, quantity));
     }
 
-    // Wyczyść cały koszyk
+    // 7. Wyczyść cały koszyk
     @DeleteMapping("/clear")
-    public ResponseEntity<Void> clearCart(Authentication authentication) {
-        String email = authentication.getName();
+    public ResponseEntity<Void> clearCart(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
         cartService.clearCart(email);
         return ResponseEntity.ok().build();
     }
