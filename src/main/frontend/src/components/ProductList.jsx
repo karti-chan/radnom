@@ -4,23 +4,36 @@ import { useCart } from '../context/CartContext'
 
 function ProductList() {
   const [products, setProducts] = useState([])
+  const [filteredProducts, setFilteredProducts] = useState([])
   const [loading, setLoading] = useState(true)
-  const { addToCart } = useCart() // ⬅️ DODAJ hook z CartContext
+  const { addToCart } = useCart() // ✅ Hook z CartContext
+
+  // ✅ Nowe stany dla filtrów
+  const [categories, setCategories] = useState([])
+  const [selectedCategories, setSelectedCategories] = useState([])
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 100 })
+  const [sortOption, setSortOption] = useState('')
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        console.log('🔄 Pobieram produkty z:', 'http://localhost:8081/api/products')
+        setLoading(true)
 
-        const response = await fetch('http://localhost:8081/api/products')
+        // 1. Pobierz produkty
+        const productsResponse = await fetch('http://localhost:8081/api/products')
+        const productsData = await productsResponse.json()
+        console.log('📦 Otrzymane produkty:', productsData)
 
-        console.log('📡 Status odpowiedzi:', response.status)
-        console.log('📡 Czy OK?:', response.ok)
+        setProducts(productsData)
+        setFilteredProducts(productsData)
 
-        const data = await response.json()
-        console.log('📦 Otrzymane dane:', data)
+        // 2. Pobierz kategorie
+        const categoriesResponse = await fetch('http://localhost:8081/api/products/categories')
+        const categoriesData = await categoriesResponse.json()
+        console.log('🏷️ Kategorie:', categoriesData)
 
-        setProducts(data)
+        setCategories(categoriesData)
+
       } catch (error) {
         console.error('❌ Błąd:', error)
       } finally {
@@ -28,38 +41,112 @@ function ProductList() {
       }
     }
 
-    fetchProducts()
+    fetchData()
   }, [])
 
-  // ================== NOWA POPRAWIONA FUNKCJA handleAddToCart ==================
+  // ✅ Funkcja do filtrowania produktów
+  const applyFilters = () => {
+    let filtered = [...products]
+
+    // 1. Filtruj po kategoriach (jeśli jakieś wybrane)
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter(product =>
+        product.category && selectedCategories.includes(product.category)
+      )
+    }
+
+    // 2. Filtruj po cenie
+    filtered = filtered.filter(product =>
+      product.price >= priceRange.min && product.price <= priceRange.max
+    )
+
+    // 3. Sortuj
+    if (sortOption) {
+      filtered.sort((a, b) => {
+        switch(sortOption) {
+          case 'price-asc':
+            return a.price - b.price
+          case 'price-desc':
+            return b.price - a.price
+          case 'name-asc':
+            return a.productName.localeCompare(b.productName)
+          case 'name-desc':
+            return b.productName.localeCompare(a.productName)
+          default:
+            return 0
+        }
+      })
+    }
+
+    console.log('🔍 Przefiltrowane produkty:', filtered.length)
+    setFilteredProducts(filtered)
+  }
+
+  // ✅ Automatycznie aplikuj filtry gdy się zmieniają
+  useEffect(() => {
+    applyFilters()
+  }, [selectedCategories, priceRange, sortOption, products])
+
+  // ✅ Obsługa checkboxów kategorii
+  const handleCategoryChange = (category) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category)
+      } else {
+        return [...prev, category]
+      }
+    })
+  }
+
+  // ✅ Obsługa zmiany ceny
+  const handlePriceChange = (type, value) => {
+    const numValue = Number(value)
+    setPriceRange(prev => ({
+      ...prev,
+      [type]: numValue
+    }))
+  }
+
+  // ✅ Obsługa sortowania
+  const handleSortChange = (option) => {
+    setSortOption(option)
+  }
+
+  // ✅ Funkcja do czyszczenia wszystkich filtrów
+  const clearFilters = () => {
+    setSelectedCategories([])
+    setPriceRange({ min: 0, max: 100 })
+    setSortOption('')
+  }
+
+  // ✅ ✅ ✅ DODAJ TĘ FUNKCJĘ - BRAKOWAŁA! ✅ ✅ ✅
   const handleAddToCart = async (product) => {
     try {
-        console.log(`🛒 handleAddToCart called for product:`, product);
-        console.log(`🛒 Product ID: ${product.productId}, Name: ${product.productName}`);
+      console.log(`🛒 Dodawanie do koszyka:`, product);
+      console.log(`🛒 Product ID: ${product.productId}, Name: ${product.productName}`);
 
-        // Sprawdź czy użytkownik jest zalogowany
-        const token = localStorage.getItem('token');
-        console.log('🔑 Token exists?', !!token);
-        console.log('🔑 Token (first 20 chars):', token?.substring(0, 20));
+      // Sprawdź czy użytkownik jest zalogowany
+      const token = localStorage.getItem('token');
+      console.log('🔑 Token exists?', !!token);
 
-        if (!token) {
-            alert('Musisz się zalogować, aby dodawać produkty do koszyka!');
-            return;
-        }
+      if (!token) {
+        alert('Musisz się zalogować, aby dodawać produkty do koszyka!');
+        return;
+      }
 
-        const success = await addToCart(product.productId, 1);
+      // Wywołaj funkcję addToCart z kontekstu
+      const success = await addToCart(product.productId, 1);
 
-        if (success) {
-            alert('✅ Produkt dodany do koszyka!');
-        } else {
-            alert('❌ Nie udało się dodać do koszyka. Sprawdź konsolę.');
-        }
+      if (success) {
+        alert('✅ Produkt dodany do koszyka!');
+      } else {
+        alert('❌ Nie udało się dodać do koszyka. Sprawdź konsolę.');
+      }
     } catch (error) {
-        console.error('❌ Error in handleAddToCart:', error);
-        alert('Wystąpił błąd: ' + error.message);
+      console.error('❌ Error in handleAddToCart:', error);
+      alert('Wystąpił błąd: ' + error.message);
     }
   };
-  // ================== KONIEC NOWEJ FUNKCJI handleAddToCart ==================
 
   if (loading) {
     return <div className="loading">Ładowanie...</div>
@@ -70,21 +157,134 @@ function ProductList() {
       {/* Filtry */}
       <aside className="filters-sidebar">
         <h2>FILTRY</h2>
+
+        <button
+          onClick={clearFilters}
+          className="clear-filters-btn"
+          style={{
+            marginBottom: '20px',
+            padding: '8px 15px',
+            backgroundColor: '#ff6b6b',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          🗑️ Wyczyść wszystkie filtry
+        </button>
+
+        {/* Filtry kategorii */}
         <div className="filter-section">
           <h3>Kategoria</h3>
-          <label><input type="checkbox" /> Warzywa</label>
-          <label><input type="checkbox" /> Nabiał</label>
-          <label><input type="checkbox" /> Mięso</label>
-          <label><input type="checkbox" /> Jaja</label>
+          {categories.length > 0 ? (
+            categories.map(category => (
+              <label key={category} className="category-checkbox">
+                <input
+                  type="checkbox"
+                  checked={selectedCategories.includes(category)}
+                  onChange={() => handleCategoryChange(category)}
+                />
+                <span>{category}</span>
+              </label>
+            ))
+          ) : (
+            <p>Brak kategorii</p>
+          )}
         </div>
 
+        {/* Filtr ceny */}
         <div className="filter-section">
           <h3>Cena</h3>
           <div className="price-inputs">
-            <input type="number" defaultValue="0" />
+            <input
+              type="number"
+              value={priceRange.min}
+              onChange={(e) => handlePriceChange('min', e.target.value)}
+              min="0"
+              max="100"
+            />
             <span>-</span>
-            <input type="number" defaultValue="24" />
+            <input
+              type="number"
+              value={priceRange.max}
+              onChange={(e) => handlePriceChange('max', e.target.value)}
+              min="0"
+              max="100"
+            />
+            <span>zł</span>
           </div>
+
+          <div className="price-slider" style={{ marginTop: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={priceRange.min}
+                onChange={(e) => handlePriceChange('min', e.target.value)}
+                style={{ width: '100%' }}
+              />
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={priceRange.max}
+                onChange={(e) => handlePriceChange('max', e.target.value)}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: '5px',
+              fontSize: '12px',
+              color: '#666'
+            }}>
+              <span>{priceRange.min} zł</span>
+              <span>{priceRange.max} zł</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Sortowanie */}
+        <div className="filter-section">
+          <h3>Sortuj według</h3>
+          <select
+            value={sortOption}
+            onChange={(e) => handleSortChange(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px',
+              borderRadius: '5px',
+              border: '1px solid #ddd'
+            }}
+          >
+            <option value="">Domyślnie</option>
+            <option value="price-asc">Cena: od najtańszych</option>
+            <option value="price-desc">Cena: od najdroższych</option>
+            <option value="name-asc">Nazwa: A-Z</option>
+            <option value="name-desc">Nazwa: Z-A</option>
+          </select>
+        </div>
+
+        {/* Statystyki filtrów */}
+        <div className="filter-stats" style={{
+          marginTop: '20px',
+          padding: '10px',
+          backgroundColor: '#f0f8ff',
+          borderRadius: '5px',
+          fontSize: '12px'
+        }}>
+          <p><strong>Aktywne filtry:</strong></p>
+          <p>Kategorie: {selectedCategories.length > 0 ? selectedCategories.join(', ') : 'wszystkie'}</p>
+          <p>Cena: {priceRange.min} - {priceRange.max} zł</p>
+          <p>Sortowanie: {
+            sortOption === 'price-asc' ? 'Cena rosnąco' :
+            sortOption === 'price-desc' ? 'Cena malejąco' :
+            sortOption === 'name-asc' ? 'Nazwa A-Z' :
+            sortOption === 'name-desc' ? 'Nazwa Z-A' : 'domyślnie'
+          }</p>
         </div>
       </aside>
 
@@ -92,12 +292,17 @@ function ProductList() {
       <main className="products-main">
         <div className="products-header">
           <div className="results-count">
-            Znalezione produkty: <strong>{products.length}</strong>
+            Znalezione produkty: <strong>{filteredProducts.length}</strong>
+            {filteredProducts.length !== products.length && (
+              <span style={{ color: '#666', marginLeft: '10px' }}>
+                (przefiltrowano z {products.length})
+              </span>
+            )}
           </div>
         </div>
 
         <div className="products-grid">
-          {products.map(product => (
+          {filteredProducts.map(product => (
             <div key={product.productId} className="product-card">
               <div className="product-image">
                 {product.imageUrl ? (
@@ -113,7 +318,6 @@ function ProductList() {
               </div>
 
               <div className="product-info">
-                {/* LINK DO STRONY PRODUKTU */}
                 <Link to={`/product/${product.productId}`} className="product-link">
                   <h3 className="product-name">{product.productName}</h3>
                 </Link>
@@ -127,16 +331,14 @@ function ProductList() {
                 )}
 
                 <div className="product-actions">
-                  {/* ⬇️⬇️⬇️ PRZYCISK DODAJ DO KOSZYKA ⬇️⬇️⬇️ */}
+                  {/* ✅ ✅ ✅ PRZYCISK DODAJ DO KOSZYKA - TERAZ DZIAŁA ✅ ✅ ✅ */}
                   <button
                     className="add-to-cart-btn"
-                    onClick={() => handleAddToCart(product)}  // ⬅️ używa nowej funkcji
+                    onClick={() => handleAddToCart(product)}
                   >
                     🛒 Dodaj do koszyka
                   </button>
-                  {/* ⬆️⬆️⬆️ KONIEC PRZYCISKU ⬆️⬆️⬆️ */}
-                  
-                  {/* LINK DO SZCZEGÓŁÓW */}
+
                   <Link to={`/product/${product.productId}`} className="details-btn">
                     ℹ️ Szczegóły
                   </Link>
@@ -145,6 +347,32 @@ function ProductList() {
             </div>
           ))}
         </div>
+
+        {/* Komunikat jeśli brak produktów */}
+        {filteredProducts.length === 0 && (
+          <div style={{
+            textAlign: 'center',
+            padding: '40px',
+            color: '#666'
+          }}>
+            <h3>😕 Nie znaleziono produktów</h3>
+            <p>Spróbuj zmienić kryteria wyszukiwania</p>
+            <button
+              onClick={clearFilters}
+              style={{
+                marginTop: '20px',
+                padding: '10px 20px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer'
+              }}
+            >
+              Wyczyść wszystkie filtry
+            </button>
+          </div>
+        )}
       </main>
     </div>
   )
