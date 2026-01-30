@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import SearchBar from './SearchBar'; // ✅ DODAJ IMPORT
 import AuthModal from './auth/AuthModal';
 import './Navbar.css';
 
@@ -18,18 +19,24 @@ const Navbar = () => {
 
   return (
     <nav className="navbar">
+      {/* ✅ LEWA CZĘŚĆ - LOGO/SKLEP */}
       <div className="nav-brand">
         <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
           Sklep
         </Link>
       </div>
 
+      {/* ✅ ŚRODKOWA CZĘŚĆ - WYSZUKIWARKA */}
+      <div className="navbar-center">
+        <SearchBar /> {/* ✅ WYSZUKIWARKA DODANA */}
+      </div>
+
+      {/* ✅ PRAWA CZĘŚĆ - KOSZYK, LOGOWANIE */}
       <div className="nav-items">
         {isAuthenticated && (
           <Link to="/cart" className="cart-link">
             <div className="cart-icon-container">
               🛒
-              {/* ZMIEŃ: pokazuj zawsze badge, ale zmieniaj styl dla 0 */}
               <span
                 className="cart-badge"
                 style={{
